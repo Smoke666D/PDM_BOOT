@@ -6,12 +6,13 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -21,7 +22,7 @@
 #include "usbd_dfu_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "aes.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -90,7 +91,11 @@
   */
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
+#if defined( ENCRYPTION )
+  static const  uint8_t key[AES_KEYLEN]  = { 0x83, 0xF7, 0x79, 0x7F, 0x52, 0x1E, 0x37, 0xA2, 0x6B, 0xAF, 0xBB, 0xD0, 0x41, 0x77, 0x9A, 0xB5 };
+  static const  uint8_t iv[AES_BLOCKLEN] = { 0x49, 0x60, 0x7B, 0x42, 0x55, 0xE6, 0xE9, 0x4B, 0x3C, 0xC7, 0x76, 0xFB, 0x06, 0x67, 0xA9, 0xF2 };
+  static struct AES_ctx ctx              = { 0U };
+#endif
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -154,7 +159,15 @@ __ALIGN_BEGIN USBD_DFU_MediaTypeDef USBD_DFU_fops_FS __ALIGN_END =
 uint16_t MEM_If_Init_FS(void)
 {
   /* USER CODE BEGIN 0 */
-  return (USBD_OK);
+  #if defined( ENCRYPTION )
+    AES_init_ctx_iv( &ctx, key, iv );
+  #endif
+  HAL_StatusTypeDef flashStatus = HAL_ERROR;
+  while ( flashStatus != HAL_OK )
+  {
+    flashStatus = HAL_FLASH_Unlock();
+  }
+  return ( USBD_OK );
   /* USER CODE END 0 */
 }
 
@@ -165,7 +178,12 @@ uint16_t MEM_If_Init_FS(void)
 uint16_t MEM_If_DeInit_FS(void)
 {
   /* USER CODE BEGIN 1 */
-  return (USBD_OK);
+  HAL_StatusTypeDef flashStatus = HAL_ERROR;
+  while ( flashStatus != HAL_OK )
+  {
+    flashStatus = HAL_FLASH_Lock();
+  }
+  return ( USBD_OK );
   /* USER CODE END 1 */
 }
 
@@ -177,9 +195,28 @@ uint16_t MEM_If_DeInit_FS(void)
 uint16_t MEM_If_Erase_FS(uint32_t Add)
 {
   /* USER CODE BEGIN 2 */
-  UNUSED(Add);
+  uint32_t               pageError = 0U;
+  HAL_StatusTypeDef      status    = HAL_ERROR;
+  USBD_StatusTypeDef     res       = USBD_FAIL;
+  FLASH_EraseInitTypeDef eraseInit;
 
-  return (USBD_OK);
+  if ( Add > BOOTLADER_SIZE ) {
+    eraseInit.TypeErase    = FLASH_TYPEERASE_SECTORS;
+    eraseInit.Banks        = FLASH_BANK_1;
+    eraseInit.Sector       = GET_SECTOR( Add );
+    eraseInit.NbSectors    = 1U;
+    eraseInit.VoltageRange = FLASH_VOLTAGE_RANGE_3;
+    status = HAL_FLASHEx_Erase( &eraseInit, &pageError );
+    if ( status == HAL_OK )
+    {
+      res = USBD_OK;
+    }
+  }
+  else
+  {
+    res = USBD_OK;
+  }
+  return res;
   /* USER CODE END 2 */
 }
 
@@ -193,11 +230,36 @@ uint16_t MEM_If_Erase_FS(uint32_t Add)
 uint16_t MEM_If_Write_FS(uint8_t *src, uint8_t *dest, uint32_t Len)
 {
   /* USER CODE BEGIN 3 */
-  UNUSED(src);
-  UNUSED(dest);
-  UNUSED(Len);
+  uint32_t           i      = 0U;
+  USBD_StatusTypeDef result = USBD_FAIL;
 
-  return (USBD_OK);
+  #if defined( ENCRYPTION )
+    AES_CBC_decrypt_buffer( &ctx, src, Len );
+  #endif
+  for ( i=0U; i<Len; i+=4U )
+  {
+	if ( ( uint32_t )( dest + i ) > BOOTLADER_SIZE )
+	{
+      if ( HAL_FLASH_Program( FLASH_TYPEPROGRAM_WORD, ( uint32_t )( dest + i ), *( uint32_t* )( src + i ) ) == HAL_OK )
+      {
+        if ( *( uint32_t* )( src + i ) != *( uint32_t* )( dest + i ) )
+        {
+          result = USBD_FAIL;
+          break;
+        }
+        else
+        {
+          result = USBD_OK;
+        }
+      }
+      else
+      {
+        result = USBD_FAIL;
+        break;
+      }
+	}
+  }
+  return result;
   /* USER CODE END 3 */
 }
 
@@ -212,11 +274,18 @@ uint8_t *MEM_If_Read_FS(uint8_t *src, uint8_t *dest, uint32_t Len)
 {
   /* Return a valid address to avoid HardFault */
   /* USER CODE BEGIN 4 */
-  UNUSED(src);
-  UNUSED(dest);
-  UNUSED(Len);
+  #if ( READING_ENB > 0 )
+    uint32_t i    = 0U;
+    uint8_t *psrc = src;
 
-  return (uint8_t*)(USBD_OK);
+    for ( i=0U; i<Len; i++ )
+    {
+      dest[i] = *psrc++;
+    }
+    return ( uint8_t* )( dest );
+  #else
+    return (USBD_OK);
+  #endif
   /* USER CODE END 4 */
 }
 
@@ -230,9 +299,6 @@ uint8_t *MEM_If_Read_FS(uint8_t *src, uint8_t *dest, uint32_t Len)
 uint16_t MEM_If_GetStatus_FS(uint32_t Add, uint8_t Cmd, uint8_t *buffer)
 {
   /* USER CODE BEGIN 5 */
-  UNUSED(Add);
-  UNUSED(buffer);
-
   switch (Cmd)
   {
     case DFU_MEDIA_PROGRAM:

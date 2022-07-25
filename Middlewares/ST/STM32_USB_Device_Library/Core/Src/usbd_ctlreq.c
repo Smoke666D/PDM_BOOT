@@ -81,7 +81,7 @@ static void USBD_GetStatus(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static void USBD_SetFeature(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static void USBD_ClrFeature(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
 static uint8_t USBD_GetLen(uint8_t *buf);
-
+static void USBD_WinUSBGetDescriptor(USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req);
 /**
   * @}
   */
@@ -107,8 +107,15 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
   {
     case USB_REQ_TYPE_CLASS:
     case USB_REQ_TYPE_VENDOR:
-      ret = (USBD_StatusTypeDef)pdev->pClass[pdev->classId]->Setup(pdev, req);
-      break;
+      switch (req->bRequest)
+      {
+        case USBD_WINUSB_VENDOR_CODE:
+          USBD_WinUSBGetDescriptor( pdev, req );
+          break;
+        default:
+          pdev->pClass->Setup( pdev, req );
+          break;
+      }
 
     case USB_REQ_TYPE_STANDARD:
       switch (req->bRequest)
@@ -140,6 +147,10 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
         case USB_REQ_CLEAR_FEATURE:
           USBD_ClrFeature(pdev, req);
           break;
+
+        case USB_REQ_MS_VENDOR_CODE:
+          USBD_WinUSBGetDescriptor( pdev, req );
+          break;  
 
         default:
           USBD_CtlError(pdev, req);
@@ -932,6 +943,29 @@ static void USBD_ClrFeature(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
   }
 }
 
+static void USBD_WinUSBGetDescriptor ( USBD_HandleTypeDef* pdev, USBD_SetupReqTypedef* req )
+{
+  uint16_t len  = 0U;
+  uint8_t* pbuf = NULL;
+  switch (req->wIndex)
+  {
+    case 0x04: // compat ID
+      pbuf = pdev->pDesc->GetWinUSBOSFeatureDescriptor( pdev->dev_speed, &len );
+      break;
+    case 0x05:
+      //pbuf = pdev->pDesc->GetWinUSBOSPropertyDescriptor( &len );
+      break;
+    default:
+       USBD_CtlError(pdev, req);
+      return;
+  }
+  if ( ( len != 0U ) && ( req->wLength != 0U ) )
+  {
+    len = MIN( len ,req->wLength );
+    USBD_CtlSendData (pdev, pbuf, len );
+  }
+  return;
+}
 
 /**
   * @brief  USBD_ParseSetupRequest

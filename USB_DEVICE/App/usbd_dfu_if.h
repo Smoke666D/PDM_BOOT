@@ -6,12 +6,13 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -48,7 +49,9 @@
   */
 
 /* USER CODE BEGIN EXPORTED_DEFINES */
-
+#define BOOTLADER_SIZE 	0x08007FFFU
+#define APP_ADDRESS    	0x08008000U
+#define READING_ENB     0U
 /* USER CODE END EXPORTED_DEFINES */
 
 /**
@@ -74,7 +77,7 @@
   */
 
 /* USER CODE BEGIN EXPORTED_MACRO */
-
+#define GET_SECTOR( adr )	 ( ( adr < 0x08003FFFU )?FLASH_SECTOR_0:( ( adr < 0x08007FFFU )?FLASH_SECTOR_1:( ( adr < 0x0800BFFFU )?FLASH_SECTOR_2:( ( adr < 0x0800FFFFU )?FLASH_SECTOR_3:( ( adr < 0x0801FFFFU )?FLASH_SECTOR_4:( ( adr < 0x0803FFFFU )?FLASH_SECTOR_5:( ( adr < 0x0805FFFFU )?FLASH_SECTOR_6:( ( adr < 0x0807FFFFU )?FLASH_SECTOR_7:( ( adr < 0x0809FFFFU )?FLASH_SECTOR_8:( ( adr < 0x080BFFFFU )?FLASH_SECTOR_9:( ( adr < 0x080DFFFFU )?FLASH_SECTOR_10:FLASH_SECTOR_11 ) ) ) ) ) ) ) ) ) ) )
 /* USER CODE END EXPORTED_MACRO */
 
 /**

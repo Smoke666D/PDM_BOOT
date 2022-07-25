@@ -62,7 +62,19 @@
   * @{
   */
 
-#define FLASH_DESC_STR      "@Internal Flash   /0x08000000/03*016Ka,01*016Kg,01*064Kg,07*128Kg,04*016Kg,01*064Kg,07*128Kg"
+#if ( defined( STM32F100xB ) || defined( STM32F101x6 ) || defined( STM32F102x6 ) || defined( STM32F103x6 ) )
+  #define FLASH_DESC_STR      "@Internal Flash/0x08008000/0*001Kb" /* Total - 32 x 1 Kb */
+#elif ( defined ( STM32F101xB ) || defined ( STM32F102xB ) || defined ( STM32F103xB ) )
+  #define FLASH_DESC_STR      "@Internal Flash/0x08008000/96*001Kg" /* Total 128 x 1 Kb */
+#elif ( defined ( STM32F101xG ) || defined ( STM32F101xE ) || defined ( STM32F100xE ) || defined ( STM32F103xE ) )
+  #define FLASH_DESC_STR      "@Internal Flash/0x08008000/240*002Kg" /* Total 256 x 2Kb */
+#elif ( defined ( STM32F214xx ) || defined ( STM32F204xx ) )
+  #define FLASH_DESC_STR      "@Internal Flash/0x08008000/02*016Kg,01*064Kg,07*128Kg"
+#elif ( defined ( STM32F405xx ) || defined ( STM32F415xx ) )
+  #define FLASH_DESC_STR      "@Internal Flash/0x08008000/02*016Kg,01*064Kg,06*128Kg"
+#elif ( defined ( STM32F425xx ) || defined ( STM32F435xx ) )
+  #define FLASH_DESC_STR      "@Internal Flash Bank1/0x08008000/02*016Kg,01*064Kg,07*128Kg@Internal Flash Bank2/0x08100000/04*016Kg,01*064Kg,07*128Kg"
+#endif
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
@@ -274,11 +286,9 @@ uint8_t *MEM_If_Read_FS(uint8_t *src, uint8_t *dest, uint32_t Len)
 {
   /* Return a valid address to avoid HardFault */
   /* USER CODE BEGIN 4 */
-  #if ( READING_ENB > 0 )
-    uint32_t i    = 0U;
+  #if defined( BOOTLOADER_READING )
     uint8_t *psrc = src;
-
-    for ( i=0U; i<Len; i++ )
+    for ( uint32_t i=0U; i<Len; i++ )
     {
       dest[i] = *psrc++;
     }

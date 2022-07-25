@@ -1,0 +1,42 @@
+Debug/
+Release/
+build/
+out/
+reports/
+
+# Tempory
+*.pyc
+*.ods
+~$*
+# Archives
+*.rar
+*.tar
+*.7z
+*.zip
+*.arj
+*.cab
+*.lzh
+# Compiled Binaries
+*.bin
+*.elf
+*.hex
+*.map
+# CUBA makeing file
+*.tmp
+*.ftl
+*.scratch
+*.c_save
+*.h_save
+*.tmp_save
+*.ftl_save
+tmp/
+# Visual studio
+/.vscode
+launch.json
+# Build
+*.d
+*.o
+*.su
+*.dump
+*.launch
+

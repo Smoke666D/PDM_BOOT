@@ -14,7 +14,7 @@
 
 #define FIRMWARE_VERSION_MAJOR  1
 #define FIRMWARE_VERSION_MINOR  0
-#define FIRMWARE_VERSION_PATCH  2
+#define FIRMWARE_VERSION_PATCH  3
 
 #if ( FIRMWARE_VERSION_MAJOR > 255U )
 #error( "Major version too big" )

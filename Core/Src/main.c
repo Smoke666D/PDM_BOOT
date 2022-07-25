@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "version.h"
+#include "usbd_dfu_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -30,7 +31,7 @@
 volatile const uint32_t version __attribute__((section (".version"))) =  0U | ( ( ( uint32_t )( FIRMWARE_VERSION_MAJOR ) ) << 16U ) |
                                                                               ( ( ( uint32_t )( FIRMWARE_VERSION_MINOR ) ) << 8U )  |
                                                                                 ( ( uint32_t )( FIRMWARE_VERSION_PATCH ) );
-
+typedef  void (*pFunction)(void);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/

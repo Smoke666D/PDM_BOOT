@@ -113,7 +113,7 @@ USBD_StatusTypeDef USBD_StdDevReq(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef
           USBD_WinUSBGetDescriptor( pdev, req );
           break;
         default:
-          pdev->pClass->Setup( pdev, req );
+          ret = (USBD_StatusTypeDef)pdev->pClass[pdev->classId]->Setup(pdev, req);
           break;
       }
 

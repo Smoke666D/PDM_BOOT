@@ -178,6 +178,9 @@ extern "C" {
 #define USBD_EP_TYPE_BULK                               0x02U
 #define USBD_EP_TYPE_INTR                               0x03U
 
+/* WINUSB*/
+#define USBD_WINUSB_VENDOR_CODE                         0x01U
+
 #ifdef USE_USBD_COMPOSITE
 #define USBD_EP_IN                                      0x80U
 #define USBD_EP_OUT                                     0x00U
@@ -295,6 +298,8 @@ typedef struct
   uint8_t *(*GetSerialStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
   uint8_t *(*GetConfigurationStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
   uint8_t *(*GetInterfaceStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
+  uint8_t  *(*GetWinUSBOSStrDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
+  uint8_t  *(*GetWinUSBOSFeatureDescriptor)(USBD_SpeedTypeDef speed, uint16_t *length);
 #if (USBD_CLASS_USER_STRING_DESC == 1)
   uint8_t *(*GetUserStrDescriptor)(USBD_SpeedTypeDef speed, uint8_t idx, uint16_t *length);
 #endif /* USBD_CLASS_USER_STRING_DESC */
